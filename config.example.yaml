@@ -11,3 +11,30 @@ ports:
   # Format: "local_port:remote_port"
   - "11434:11434" # Ollama API
   - "8080:8080"   # Open WebUI
+
+# --- Startup behaviour ---
+startup:
+  # How long to wait for the pod to reach RUNNING status before aborting (minutes).
+  pod_start_timeout_minutes: 5
+  # Extra seconds to wait after the pod is RUNNING before attempting the SSH connection,
+  # giving the sshd daemon time to fully start inside the container.
+  ssh_boot_wait_seconds: 10
+
+# --- Idle auto-kill ---
+autokill:
+  # Shut down if Ollama reports no loaded models for this many minutes.
+  idle_timeout_minutes: 15
+  # Unconditional hard cap on total uptime (minutes), regardless of activity.
+  hard_timeout_minutes: 120
+  # How often (seconds) to poll Ollama's /api/ps endpoint.
+  ollama_poll_interval_seconds: 30
+  # The remote port that Ollama listens on (used to find the correct local forwarded port).
+  ollama_remote_port: 11434
+
+# --- Local HTTP API ---
+api:
+  # Set to false to disable the /wake and /status endpoints entirely.
+  enabled: true
+  # Always bind to localhost only — never expose to external networks.
+  host: "127.0.0.1"
+  port: 8765
