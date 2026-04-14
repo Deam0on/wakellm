@@ -1,67 +1,39 @@
 # WakeLLM
 
-WakeLLM bridges a local always-on machine (such as a Raspberry Pi) with an ephemeral cloud GPU pod on RunPod. It provisions the remote pod on demand, establishes a local SSH port-forwarding tunnel, and shuts the pod down automatically when it is no longer in use — keeping compute costs proportional to actual usage.
+**Summon a datacenter GPU to your local network, and only pay for the minutes you use.**
 
----
+WakeLLM bridges the gap between low-power, always-on home servers (like a Raspberry Pi) and high-power ephemeral cloud GPUs (like RunPod). It allows you to keep your sensitive data, agent memory, and API keys securely on your local network, while dynamically spinning up massive cloud compute only when it is needed.
 
-## How It Works
+When you send a chat message or a scheduled agent (like OpenClaw) wakes up, WakeLLM provisions a cloud GPU, establishes a secure SSH tunnel to your local machine, and exposes the remote Ollama and Open WebUI services as if they were running natively on your `localhost`. When the task is done, the instance is destroyed.
 
-1. A local cron job, CLI command, or HTTP request triggers WakeLLM.
-2. WakeLLM sends a resume mutation to the RunPod API.
-3. Once the pod reports ready, WakeLLM opens an SSH tunnel, forwarding configured remote ports to `localhost`.
-4. Local services connect to the remote Ollama or Open WebUI as if they were running natively.
-5. The idle monitor detects inactivity and tears down the pod automatically.
+### Key Features
+* **Ephemeral Compute, Persistent State:** Keep your agent's memory, databases, and workflow logic locked safely on your local LAN. The cloud is strictly used as a temporary "brain."
+* **Zero-Config Tunneling:** Automatically binds remote cloud ports (e.g., 11434 for Ollama, 8080 for Open WebUI) to your local machine.
+* **Smart Idle Auto-Kill:** Monitors API traffic and web socket connections. If your agent finishes its task or you stop chatting for a predefined time, WakeLLM automatically shuts down the remote pod to prevent runaway billing.
+* **Agent Framework Ready:** Plugs seamlessly into tools like OpenClaw, AutoGen, and CrewAI without needing to refactor their network logic.
 
----
+### Architecture Workflow
+1. **Trigger:** A local CRON job or CLI command tells WakeLLM to wake up.
+2. **Provision:** WakeLLM hits the RunPod API to start your pre-configured GPU pod.
+3. **Tunnel:** Once the pod is alive, WakeLLM retrieves the ephemeral IP and establishes a reverse SSH tunnel.
+4. **Execution:** Local services (OpenClaw, scripts) connect to `http://localhost:11434` seamlessly.
+5. **Terminate:** The auto-kill daemon detects inactivity and tears down the infrastructure.
 
-## Key Features
+### Prerequisites
+* A local machine (Raspberry Pi, old laptop, or Mini PC) running Linux/macOS.
+* Python 3.10+
+* A RunPod account and API Key.
+* A pre-configured RunPod Network Volume with your LLM tools (Ollama / Open WebUI) installed.
 
-- **Ephemeral compute, persistent local state.** Agent memory, databases, and credentials stay on the local machine. The cloud is used only for computation.
-- **SSH port forwarding.** Uses native OpenSSH to bind remote ports (Ollama, Open WebUI, etc.) to `localhost` — no extra tooling required.
-- **Idle auto-kill.** Polls Ollama's `/api/ps` endpoint. Shuts down when no model has been loaded for a configurable idle period.
-- **Hard uptime cap.** Unconditional shutdown after a configurable total runtime, regardless of activity.
-- **Billing fail-safes.** Pod start timeout, tunnel crash detection, and exception-triggered shutdown all call `podStop` before exiting.
-- **Local HTTP API.** `POST /wake` and `GET /status` endpoints for programmatic control and status polling.
-- **Container-first.** Runs as a Docker container. Startup gate runs unit tests and Trivy security scans before launching the application.
-
----
-
-## Quick Start
-
+### Quick Start (Coming Soon)
 ```bash
-docker build -t wakellm:latest .
+git clone [https://github.com/yourusername/WakeLLM.git](https://github.com/yourusername/WakeLLM.git)
+cd WakeLLM
+pip install -r requirements.txt
 
-docker run --rm \
-  -e WAKELLM_RUNPOD_API_KEY="<your-api-key>" \
-  -e WAKELLM_RUNPOD_POD_ID="<your-pod-id>" \
-  -e WAKELLM_SSH_KEY="$(cat ~/.ssh/id_ed25519)" \
-  -e WAKELLM_PORTS="11434:11434,8080:8080" \
-  wakellm:latest start
-```
+# Configure your API keys and Pod ID
+cp config.example.yaml config.yaml
+nano config.yaml
 
----
-
-## Prerequisites
-
-- Docker
-- A RunPod account and API key
-- A RunPod pod (not serverless) with `sshd` running and an SSH key registered
-- An SSH private key corresponding to the key registered in the pod
-
----
-
-## Documentation
-
-| Document | Description |
-|---|---|
-| [docs/architecture.md](docs/architecture.md) | Component map, state machine, lifecycle flow, threading model |
-| [docs/configuration.md](docs/configuration.md) | All configuration keys — YAML and environment variable reference |
-| [docs/api.md](docs/api.md) | HTTP API reference: POST /wake, GET /status |
-| [docs/deployment.md](docs/deployment.md) | Docker build and run instructions, expected startup output |
-| [docs/development.md](docs/development.md) | Test structure, how to add tests, design constraints |
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE).
+# Summon the GPU and start the tunnel
+wakellm start
