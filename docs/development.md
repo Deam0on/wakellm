@@ -35,16 +35,18 @@ env/
 
 ## Running Tests
 
-Tests run inside the container as part of the startup gate. To run them manually during development, build the image and execute pytest directly:
+All tests run inside Docker — no local Python environment needed.
 
 ```bash
-docker build -t wakellm:dev .
+# Run the full pipeline (build + tests + Trivy + start)
+./start-wake.sh
 
-# Run tests only (override the image entrypoint so WakeLLM doesn't start afterward)
+# Run tests only (no secrets needed; no WakeLLM start)
+docker build -t wakellm:dev .
 docker run --rm --entrypoint python3 wakellm:dev -m pytest tests/ -v --tb=short
 ```
 
-To run a specific test file or test:
+To run a specific test file or class:
 
 ```bash
 docker run --rm --entrypoint python3 wakellm:dev -m pytest tests/test_config.py -v

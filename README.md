@@ -29,17 +29,17 @@ WakeLLM bridges a local always-on machine (such as a Raspberry Pi) with an ephem
 ## Quick Start
 
 ```bash
-docker build -t wakellm:latest .
-
-# Copy the env file template and fill in your values
+# Copy and fill in your config
 cp env/config.env.example env/config.env
+# edit env/config.env
 
-docker run --rm \
-  --env-file env/config.env \
-  -v ~/.ssh/id_ed25519:/run/secrets/id_ed25519:ro \
-  -p 8765:8765 \
-  wakellm:latest start
+chmod +x start-wake.sh
+./start-wake.sh
 ```
+
+`start-wake.sh` builds the image, runs unit tests and Trivy security scans in
+ephemeral containers, then starts WakeLLM. All checks must pass before the
+application starts.
 
 ---
 

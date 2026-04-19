@@ -2,11 +2,9 @@
 # WakeLLM — container image
 # Base: python:3.12-slim (Debian slim)
 #
-# On every container start, entrypoint.sh gates startup with:
-#   1. pytest unit tests
-#   2. trivy fs scan (Python packages)
-#   3. trivy rootfs scan (full OS)
-# Only on full pass does WakeLLM start.
+# The safety gate (pytest + Trivy) is run by start-wake.sh on the host
+# before starting the container. The entrypoint inside the container is a
+# thin dispatcher that calls python3 -m wakellm start|stop|status.
 # ============================================================
 FROM python:3.12-slim
 

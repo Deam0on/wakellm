@@ -1,12 +1,15 @@
 # WakeLLM Deployment
 
-WakeLLM is designed to run as a Docker container. The container image performs three safety gates on every startup before launching the application:
+WakeLLM is designed to run as a Docker container. The normal entry point is
+`start-wake.sh`, which runs the full pipeline on the host:
 
-1. Unit tests (pytest)
-2. Trivy filesystem scan — CRITICAL vulnerabilities in installed Python packages
-3. Trivy rootfs scan — CRITICAL vulnerabilities in OS packages
+1. Build the container image
+2. Run pytest inside an ephemeral container from the just-built image
+3. Run Trivy filesystem scan (Python packages) inside a second ephemeral container
+4. Run Trivy rootfs scan (OS packages) inside a third ephemeral container
+5. Start WakeLLM if all checks pass
 
-All three must pass for the application to start.
+All three gate steps must pass or the script aborts before starting WakeLLM.
 
 ---
 
@@ -19,13 +22,28 @@ All three must pass for the application to start.
 
 ---
 
-## Build the Image
+## Normal startup
+
+```bash
+chmod +x start-wake.sh
+./start-wake.sh
+```
+
+`start-wake.sh` builds the image, runs the safety gate, then starts WakeLLM in
+a persistent container named `wakellm`. It reads `env/config.env` and uses
+`~/.ssh/id_ed25519` by default; override with environment variables:
+
+```bash
+WAKELLM_ENV_FILE=env/prod.env WAKELLM_SSH_KEY_FILE=/path/to/key ./start-wake.sh
+```
+
+## Build the image (manual)
 
 ```bash
 docker build -t wakellm:latest .
 ```
 
-The build installs Trivy from the official Aqua Security apt repository and pre-warms the Trivy vulnerability database so that startup scans are fast.
+The build installs Trivy from the official Aqua Security apt repository and pre-warms the Trivy vulnerability database so that gate scans are fast.
 
 ---
 
@@ -88,22 +106,22 @@ See [configuration.md](configuration.md) for a full reference. Key optional vari
 
 ---
 
-## Expected Startup Output
+## Expected output of ./start-wake.sh
 
 ```
-========================================
- WakeLLM Container Startup Gate
-========================================
+[1/4] Building image wakellm:latest...
+... (docker build output) ...
+[PASS] Image built.
 
-[1/3] Running unit tests...
+[2/4] Running unit tests...
 ... (pytest output) ...
 [PASS] All tests passed.
 
-[2/3] Trivy: scanning installed Python packages...
+[3/4] Trivy: scanning installed Python packages...
 ... (Trivy table) ...
 [PASS] No CRITICAL vulnerabilities in installed packages.
 
-[3/3] Trivy: scanning full container filesystem...
+[4/4] Trivy: scanning full container filesystem...
 ... (Trivy table) ...
 [PASS] No CRITICAL vulnerabilities in container OS.
 
@@ -115,23 +133,28 @@ See [configuration.md](configuration.md) for a full reference. Key optional vari
 [INFO] Waking up pod <pod-id>...
 ```
 
-If any gate step fails, the container exits with a non-zero status code without starting the application.
+If any gate step fails, `start-wake.sh` exits with a non-zero status code and WakeLLM is not started.
 
 ---
 
-## CLI Commands
+## CLI commands
 
-The container's `CMD` defaults to `start`. You can override it:
+`start-wake.sh` accepts an action argument (default: `start`):
 
 ```bash
-# Start the pod and tunnel (default)
-docker run ... wakellm:latest start
+./start-wake.sh          # build + gate + start (default)
+./start-wake.sh start    # same as above
+./start-wake.sh stop     # stop the running pod (skips gate, no rebuild)
+./start-wake.sh status   # print pod status     (skips gate, no rebuild)
+```
 
-# Stop the currently running pod (sends podStop mutation; no tunnel required)
-docker run ... wakellm:latest stop
+Or invoke `docker run` directly without the gate:
 
-# Print the pod's current status from the RunPod API
-docker run ... wakellm:latest status
+```bash
+docker run --rm --env-file env/config.env \
+  -v ~/.ssh/id_ed25519:/run/secrets/id_ed25519:ro \
+  -p 8765:8765 \
+  wakellm:latest stop
 ```
 
 ---
