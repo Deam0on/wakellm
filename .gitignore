@@ -1,1 +1,5 @@
 PROJECT_SCOPE.md
+
+# Local secrets — do not commit
+env/config.env
+.env

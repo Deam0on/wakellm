@@ -31,11 +31,13 @@ WakeLLM bridges a local always-on machine (such as a Raspberry Pi) with an ephem
 ```bash
 docker build -t wakellm:latest .
 
+# Copy the env file template and fill in your values
+cp env/config.env.example env/config.env
+
 docker run --rm \
-  -e WAKELLM_RUNPOD_API_KEY="<your-api-key>" \
-  -e WAKELLM_RUNPOD_POD_ID="<your-pod-id>" \
-  -e WAKELLM_SSH_KEY="$(cat ~/.ssh/id_ed25519)" \
-  -e WAKELLM_PORTS="11434:11434,8080:8080" \
+  --env-file env/config.env \
+  -v ~/.ssh/id_ed25519:/run/secrets/id_ed25519:ro \
+  -p 8765:8765 \
   wakellm:latest start
 ```
 
@@ -55,10 +57,11 @@ docker run --rm \
 | Document | Description |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | Component map, state machine, lifecycle flow, threading model |
-| [docs/configuration.md](docs/configuration.md) | All configuration keys — YAML and environment variable reference |
+| [docs/configuration.md](docs/configuration.md) | All configuration keys — environment variable reference |
 | [docs/api.md](docs/api.md) | HTTP API reference: POST /wake, GET /status |
 | [docs/deployment.md](docs/deployment.md) | Docker build and run instructions, expected startup output |
 | [docs/development.md](docs/development.md) | Test structure, how to add tests, design constraints |
+| [docs/openclaw.md](docs/openclaw.md) | Integrating OpenClaw (chatbot + scheduled digest use cases) |
 
 ---
 

@@ -3,8 +3,6 @@ import re
 import stat
 import sys
 
-import yaml
-
 # ---------------------------------------------------------------------------
 # Valid pod ID: lowercase alphanumeric + hyphens, 8-20 characters.
 # Guards against f-string injection into GraphQL mutations.
@@ -100,20 +98,17 @@ def load_config_from_env() -> dict:
     }
 
 
-def load_config(path):
-    # If the primary required env var is present, skip the YAML file entirely.
-    if os.environ.get("WAKELLM_RUNPOD_API_KEY"):
-        try:
-            return load_config_from_env()
-        except EnvironmentError as e:
-            print(f"[ERROR] Environment config error: {e}")
-            sys.exit(1)
-
+def load_config() -> dict:
+    """Load configuration from environment variables. Exits with code 1 if required vars are missing."""
     try:
-        with open(path, 'r') as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        print(f"[ERROR] {path} not found. Please copy config.example.yaml to config.yaml")
+        return load_config_from_env()
+    except EnvironmentError as e:
+        print(f"[ERROR] {e}")
+        print(
+            "[ERROR] Set WAKELLM_RUNPOD_API_KEY, WAKELLM_RUNPOD_POD_ID, WAKELLM_PORTS, "
+            "and one of WAKELLM_SSH_KEY_PATH / WAKELLM_SSH_KEY. "
+            "See env/config.env.example for a full template."
+        )
         sys.exit(1)
 
 

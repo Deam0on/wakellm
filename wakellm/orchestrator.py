@@ -15,8 +15,8 @@ class WakeLLM:
     STATE_RUNNING  = "running"
     STATE_STOPPING = "stopping"
 
-    def __init__(self, config_path="config.yaml"):
-        self.config = load_config(config_path)
+    def __init__(self):
+        self.config = load_config()
         validate_config(self.config)
         validate_pod_id(self.config['runpod']['pod_id'])
 

@@ -31,23 +31,22 @@ The build installs Trivy from the official Aqua Security apt repository and pre-
 
 ## Run the Container
 
-### Required Environment Variables
+### Recommended: use an env file (no secrets in YAML)
 
-| Variable | Description |
-|---|---|
-| `WAKELLM_RUNPOD_API_KEY` | Your RunPod API key |
-| `WAKELLM_RUNPOD_POD_ID` | The ID of the pod to resume (e.g., `6068y77xfq1rux`) |
-| `WAKELLM_SSH_KEY_PATH` or `WAKELLM_SSH_KEY` | SSH private key (see below) |
-| `WAKELLM_PORTS` | Comma-separated `local:remote` port mappings (e.g., `11434:11434,8080:8080`) |
+Copy the example file and fill in your values:
 
-### SSH Key Options
-
-**Option A — bind-mount the key file:**
 ```bash
-docker run \
+cp env/config.env.example env/config.env
+```
+
+Then run the container using `--env-file` and bind-mount your SSH key:
+
+```bash
+docker run --rm \
+  --env-file env/config.env \
   -v ~/.ssh/id_ed25519:/run/secrets/id_ed25519:ro \
-  -e WAKELLM_SSH_KEY_PATH=/run/secrets/id_ed25519 \
-  ...
+  -p 8765:8765 \
+  wakellm:latest start
 ```
 
 **Option B — pass key content as an environment variable:**
@@ -64,10 +63,8 @@ The key is written to `/tmp/wakellm_ssh_key` with `0600` permissions inside the 
 
 ```bash
 docker run --rm \
-  -e WAKELLM_RUNPOD_API_KEY="<your-api-key>" \
-  -e WAKELLM_RUNPOD_POD_ID="<your-pod-id>" \
-  -e WAKELLM_SSH_KEY="$(cat ~/.ssh/id_ed25519)" \
-  -e WAKELLM_PORTS="11434:11434,8080:8080" \
+  --env-file env/config.env \
+  -v ~/.ssh/id_ed25519:/run/secrets/id_ed25519:ro \
   -p 8765:8765 \
   wakellm:latest start
 ```

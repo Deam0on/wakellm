@@ -6,7 +6,7 @@
 
 ```
 wakellm/
-    config.py        — configuration loading, validation, accessors
+    config.py        — configuration loading from environment variables
     runpod.py        — RunPod GraphQL API client
     tunnel.py        — SSH tunnel subprocess management
     monitors.py      — daemon thread targets (tunnel + idle)
@@ -26,7 +26,9 @@ tests/
 Dockerfile           — container image definition
 entrypoint.sh        — container startup gate (tests + Trivy + exec)
 requirements.txt     — all dependencies (runtime and test)
-config.example.yaml  — configuration template
+env/
+    config.env.example  — environment variable template (commit this)
+    config.env          — your local secrets (gitignored)
 ```
 
 ---
@@ -38,15 +40,15 @@ Tests run inside the container as part of the startup gate. To run them manually
 ```bash
 docker build -t wakellm:dev .
 
-# Run tests only, skip the entrypoint gate
-docker run --rm wakellm:dev python3 -m pytest tests/ -v --tb=short
+# Run tests only (override the image entrypoint so WakeLLM doesn't start afterward)
+docker run --rm --entrypoint python3 wakellm:dev -m pytest tests/ -v --tb=short
 ```
 
 To run a specific test file or test:
 
 ```bash
-docker run --rm wakellm:dev python3 -m pytest tests/test_config.py -v
-docker run --rm wakellm:dev python3 -m pytest tests/test_orchestrator.py::TestShutdown -v
+docker run --rm --entrypoint python3 wakellm:dev -m pytest tests/test_config.py -v
+docker run --rm --entrypoint python3 wakellm:dev -m pytest tests/test_orchestrator.py::TestShutdown -v
 ```
 
 ---
@@ -81,7 +83,7 @@ Two shared fixtures are defined; all other tests should use these rather than bu
 
 - Mock all I/O at the boundary: `requests.post`, `subprocess.Popen`, `time.sleep`, `time.monotonic`.
 - Never make real network requests or spawn real subprocesses.
-- Use `monkeypatch.delenv("WAKELLM_RUNPOD_API_KEY", raising=False)` in any test that exercises YAML loading to prevent the container environment from redirecting to the env-var loader.
+- Use `monkeypatch.delenv("WAKELLM_RUNPOD_API_KEY", raising=False)` in any test that expects env-loading to fail — the container environment may have these set.
 
 ### Working with threading in tests
 

@@ -34,7 +34,7 @@ def engine(minimal_config, mocker):
     mocker.patch("wakellm.orchestrator.run_tunnel_monitor")
     mocker.patch("wakellm.orchestrator.run_idle_monitor")
     mocker.patch("time.sleep")
-    return WakeLLM("config.yaml")
+    return WakeLLM()
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ class TestInit:
         mocker.patch("wakellm.orchestrator.load_config", return_value=minimal_config)
         mocker.patch("wakellm.orchestrator.validate_pod_id")
         mocker.patch("wakellm.orchestrator.RunPodClient")
-        WakeLLM("config.yaml")
+        WakeLLM()
         mock_validate.assert_called_once_with(minimal_config)
 
     def test_validate_pod_id_called(self, mocker, minimal_config):
@@ -61,7 +61,7 @@ class TestInit:
         mocker.patch("wakellm.orchestrator.validate_config")
         mock_vpid = mocker.patch("wakellm.orchestrator.validate_pod_id")
         mocker.patch("wakellm.orchestrator.RunPodClient")
-        WakeLLM("config.yaml")
+        WakeLLM()
         mock_vpid.assert_called_once_with(minimal_config["runpod"]["pod_id"])
 
 

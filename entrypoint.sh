@@ -53,4 +53,14 @@ echo "========================================"
 echo " All checks passed — starting WakeLLM"
 echo "========================================"
 echo ""
-exec python3 -m wakellm "$@"
+
+# If the user passed a custom command (e.g. `python3 -m pytest ...`), run it
+# instead of treating it as a WakeLLM CLI action.
+case "${1:-}" in
+  start|stop|status|"")
+    exec python3 -m wakellm "$@"
+    ;;
+  *)
+    exec "$@"
+    ;;
+esac

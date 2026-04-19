@@ -4,7 +4,6 @@ import sys
 import stat
 
 import pytest
-import yaml
 
 from wakellm.config import (
     load_config,
@@ -18,34 +17,28 @@ from wakellm.config import (
 
 
 # ---------------------------------------------------------------------------
-# load_config — YAML path
+# load_config — delegates to load_config_from_env
 # ---------------------------------------------------------------------------
 
-class TestLoadConfigYaml:
-    def test_happy_path(self, tmp_path, minimal_config, monkeypatch):
-        # Ensure env-var path is not triggered (container may have these set)
-        monkeypatch.delenv("WAKELLM_RUNPOD_API_KEY", raising=False)
-        cfg_file = tmp_path / "config.yaml"
-        cfg_file.write_text(yaml.dump(minimal_config))
-        result = load_config(str(cfg_file))
-        assert result["runpod"]["api_key"] == "testapikey123"
-
-    def test_missing_file_exits(self, tmp_path, monkeypatch):
-        monkeypatch.delenv("WAKELLM_RUNPOD_API_KEY", raising=False)
-        with pytest.raises(SystemExit) as exc:
-            load_config(str(tmp_path / "nonexistent.yaml"))
-        assert exc.value.code == 1
-
-    def test_env_takes_priority_over_yaml(self, tmp_path, minimal_config, monkeypatch):
-        """When WAKELLM_RUNPOD_API_KEY is set, env loader is used even if file exists."""
-        cfg_file = tmp_path / "config.yaml"
-        cfg_file.write_text(yaml.dump(minimal_config))
-        monkeypatch.setenv("WAKELLM_RUNPOD_API_KEY", "env-key")
+class TestLoadConfig:
+    def _base_env(self, monkeypatch):
+        monkeypatch.setenv("WAKELLM_RUNPOD_API_KEY", "env-api-key")
         monkeypatch.setenv("WAKELLM_RUNPOD_POD_ID", "abc123def456")
-        monkeypatch.setenv("WAKELLM_SSH_KEY_PATH", "/tmp/key")
-        monkeypatch.setenv("WAKELLM_PORTS", "11434:11434")
-        result = load_config(str(cfg_file))
-        assert result["runpod"]["api_key"] == "env-key"
+        monkeypatch.setenv("WAKELLM_SSH_KEY_PATH", "/tmp/id_ed25519")
+        monkeypatch.setenv("WAKELLM_PORTS", "11434:11434,8080:8080")
+
+    def test_happy_path(self, monkeypatch):
+        self._base_env(monkeypatch)
+        result = load_config()
+        assert result["runpod"]["api_key"] == "env-api-key"
+
+    def test_missing_required_vars_exits(self, monkeypatch):
+        for v in ("WAKELLM_RUNPOD_API_KEY", "WAKELLM_RUNPOD_POD_ID",
+                  "WAKELLM_SSH_KEY_PATH", "WAKELLM_SSH_KEY", "WAKELLM_PORTS"):
+            monkeypatch.delenv(v, raising=False)
+        with pytest.raises(SystemExit) as exc:
+            load_config()
+        assert exc.value.code == 1
 
 
 # ---------------------------------------------------------------------------
