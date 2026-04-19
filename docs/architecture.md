@@ -2,7 +2,7 @@
 
 ## Overview
 
-WakeLLM is a Python orchestrator that bridges a local always-on machine (such as a Raspberry Pi) with an ephemeral cloud GPU pod on RunPod. It provisions the remote pod on demand, establishes a local SSH port-forwarding tunnel, monitors activity, and shuts the pod down automatically when it is no longer needed — preventing runaway billing.
+WakeLLM is a Python orchestrator that bridges a local always-on Linux machine (Raspberry Pi, home server, VPS, workstation, etc.) with an ephemeral cloud GPU pod on RunPod. It provisions the remote pod on demand, establishes a local SSH port-forwarding tunnel, monitors activity, and shuts the pod down automatically when it is no longer needed — preventing runaway billing.
 
 ---
 

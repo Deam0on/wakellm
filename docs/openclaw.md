@@ -1,14 +1,15 @@
 # WakeLLM + OpenClaw Integration
 
 [OpenClaw](https://github.com/openclaw/openclaw) is a MIT-licensed personal AI assistant
-(TypeScript/Node.js) that runs as a daemon on your always-on machine (e.g. a Raspberry Pi)
-and integrates with messaging channels, cron automation, and LLM providers.
+(TypeScript/Node.js) that runs as a daemon on your always-on Linux machine (Raspberry Pi,
+home server, VPS, etc.) and integrates with messaging channels, cron automation, and LLM
+providers.
 
 WakeLLM and OpenClaw occupy different layers of the same stack:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  Raspberry Pi (always-on)                              │
+│  Always-on Linux host (Pi, server, VPS, workstation)   │
 │                                                        │
 │  OpenClaw daemon — assistant brain, channels, cron     │
 │      │                                                 │
@@ -30,13 +31,13 @@ the pod when idle. OpenClaw never knows or cares about RunPod — it just calls
 
 ## Prerequisites
 
-- Node.js 24 (recommended) or 22.16+ installed on the Pi
+- Node.js 24 (recommended) or 22.16+ installed on the host machine
 - WakeLLM container built and configured (see [deployment.md](deployment.md))
 - A RunPod pod with Ollama running and `WAKELLM_PORTS` including `11434:11434`
 
 ---
 
-## Install OpenClaw on the Pi
+## Install OpenClaw
 
 ```bash
 npm install -g openclaw@latest
@@ -99,7 +100,7 @@ awake for the duration of the task.
 
 ### Cron wrapper script
 
-Save this to `/home/pi/bin/wakellm-digest.sh` and make it executable (`chmod +x`):
+Save this to `~/bin/wakellm-digest.sh` and make it executable (`chmod +x`):
 
 ```bash
 #!/usr/bin/env bash
@@ -108,8 +109,8 @@ Save this to `/home/pi/bin/wakellm-digest.sh` and make it executable (`chmod +x`
 set -euo pipefail
 
 WAKELLM_CONTAINER="wakellm_digest_$$"
-ENV_FILE="/home/pi/wakellm/env/config.env"
-SSH_KEY="/home/pi/.ssh/id_ed25519"
+ENV_FILE="${WAKELLM_ENV_FILE:-${HOME}/wakellm/env/config.env}"
+SSH_KEY="${WAKELLM_SSH_KEY_FILE:-${HOME}/.ssh/id_ed25519}"
 
 # Start WakeLLM in background
 docker run -d --name "$WAKELLM_CONTAINER" \

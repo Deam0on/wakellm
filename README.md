@@ -1,6 +1,8 @@
 # WakeLLM
 
-WakeLLM bridges a local always-on machine (such as a Raspberry Pi) with an ephemeral cloud GPU pod on RunPod. It provisions the remote pod on demand, establishes a local SSH port-forwarding tunnel, and shuts the pod down automatically when it is no longer in use — keeping compute costs proportional to actual usage.
+WakeLLM bridges a local always-on Linux machine with an ephemeral cloud GPU pod on RunPod. It provisions the remote pod on demand, establishes a local SSH port-forwarding tunnel, and shuts the pod down automatically when it is no longer in use — keeping compute costs proportional to actual usage.
+
+It runs on any Linux host with Docker: a Raspberry Pi, a home server, a VPS, or a workstation. The local machine acts as the always-on control plane; the GPU compute lives entirely in the cloud.
 
 ---
 

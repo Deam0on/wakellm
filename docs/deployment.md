@@ -1,7 +1,8 @@
 # WakeLLM Deployment
 
-WakeLLM is designed to run as a Docker container. The normal entry point is
-`start-wake.sh`, which runs the full pipeline on the host:
+WakeLLM is designed to run as a Docker container on any Linux host (Raspberry Pi,
+home server, VPS, workstation, etc.). The normal entry point is `start-wake.sh`,
+which runs the full pipeline on the host:
 
 1. Build the container image
 2. Run pytest inside an ephemeral container from the just-built image
@@ -15,7 +16,7 @@ All three gate steps must pass or the script aborts before starting WakeLLM.
 
 ## Prerequisites
 
-- Docker (any recent version)
+- Any Linux host with Docker installed (Raspberry Pi 4/5, home server, VPS, workstation, etc.)
 - RunPod account with an API key
 - A RunPod pod (not a serverless endpoint) that has `sshd` running and an SSH key configured
 - An SSH private key corresponding to the key registered in RunPod
